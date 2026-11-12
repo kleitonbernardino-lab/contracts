@@ -124,18 +124,13 @@ export function extractErrorCode(error) {
   }
   
   // Case 3: Error might have a resultXdr field (common in Soroban)
+  // resultXdr (TransactionResult) carries ledger fees, sequence numbers, and
+  // execution status, but not contract error codes. Rather than guessing the
+  // first integer found anywhere in stringified XDR (which leads to false diagnoses
+  // like interpreting fees or sequence numbers as contract errors, Issue #859),
+  // return null so formatError can indicate the error code could not be determined.
   if (error.resultXdr) {
-    try {
-      // Try to parse XDR to extract error code
-      // This is a simplified approach - actual XDR parsing would be more complex
-      const str = JSON.stringify(error.resultXdr);
-      const match = str.match(/\b(\d+)\b/);
-      if (match) {
-        return parseInt(match[1], 10);
-      }
-    } catch (e) {
-      // Ignore XDR parsing errors
-    }
+    return null;
   }
   
   // Case 4: Error might have a value or code property
